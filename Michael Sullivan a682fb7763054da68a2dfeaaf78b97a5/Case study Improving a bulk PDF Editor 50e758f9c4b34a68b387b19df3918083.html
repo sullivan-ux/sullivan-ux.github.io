@@ -1,0 +1,647 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Case study: Improving a bulk PDF Editor</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 3px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	text-indent: -1.7em;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-block;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1.25em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+}
+.highlight-gray {
+	color: rgb(155,154,151);
+}
+.highlight-brown {
+	color: rgb(100,71,58);
+}
+.highlight-orange {
+	color: rgb(217,115,13);
+}
+.highlight-yellow {
+	color: rgb(223,171,1);
+}
+.highlight-teal {
+	color: rgb(15,123,108);
+}
+.highlight-blue {
+	color: rgb(11,110,153);
+}
+.highlight-purple {
+	color: rgb(105,64,165);
+}
+.highlight-pink {
+	color: rgb(173,26,114);
+}
+.highlight-red {
+	color: rgb(224,62,62);
+}
+.highlight-gray_background {
+	background: rgb(235,236,237);
+}
+.highlight-brown_background {
+	background: rgb(233,229,227);
+}
+.highlight-orange_background {
+	background: rgb(250,235,221);
+}
+.highlight-yellow_background {
+	background: rgb(251,243,219);
+}
+.highlight-teal_background {
+	background: rgb(221,237,234);
+}
+.highlight-blue_background {
+	background: rgb(221,235,241);
+}
+.highlight-purple_background {
+	background: rgb(234,228,242);
+}
+.highlight-pink_background {
+	background: rgb(244,223,235);
+}
+.highlight-red_background {
+	background: rgb(251,228,228);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(55, 53, 47, 0.6);
+	fill: rgba(55, 53, 47, 0.6);
+}
+.block-color-brown {
+	color: rgb(100,71,58);
+	fill: rgb(100,71,58);
+}
+.block-color-orange {
+	color: rgb(217,115,13);
+	fill: rgb(217,115,13);
+}
+.block-color-yellow {
+	color: rgb(223,171,1);
+	fill: rgb(223,171,1);
+}
+.block-color-teal {
+	color: rgb(15,123,108);
+	fill: rgb(15,123,108);
+}
+.block-color-blue {
+	color: rgb(11,110,153);
+	fill: rgb(11,110,153);
+}
+.block-color-purple {
+	color: rgb(105,64,165);
+	fill: rgb(105,64,165);
+}
+.block-color-pink {
+	color: rgb(173,26,114);
+	fill: rgb(173,26,114);
+}
+.block-color-red {
+	color: rgb(224,62,62);
+	fill: rgb(224,62,62);
+}
+.block-color-gray_background {
+	background: rgb(235,236,237);
+}
+.block-color-brown_background {
+	background: rgb(233,229,227);
+}
+.block-color-orange_background {
+	background: rgb(250,235,221);
+}
+.block-color-yellow_background {
+	background: rgb(251,243,219);
+}
+.block-color-teal_background {
+	background: rgb(221,237,234);
+}
+.block-color-blue_background {
+	background: rgb(221,235,241);
+}
+.block-color-purple_background {
+	background: rgb(234,228,242);
+}
+.block-color-pink_background {
+	background: rgb(244,223,235);
+}
+.block-color-red_background {
+	background: rgb(251,228,228);
+}
+.select-value-color-default { background-color: rgba(206,205,202,0.5); }
+.select-value-color-gray { background-color: rgba(155,154,151, 0.4); }
+.select-value-color-brown { background-color: rgba(140,46,0,0.2); }
+.select-value-color-orange { background-color: rgba(245,93,0,0.2); }
+.select-value-color-yellow { background-color: rgba(233,168,0,0.2); }
+.select-value-color-green { background-color: rgba(0,135,107,0.2); }
+.select-value-color-blue { background-color: rgba(0,120,223,0.2); }
+.select-value-color-purple { background-color: rgba(103,36,222,0.2); }
+.select-value-color-pink { background-color: rgba(221,0,129,0.2); }
+.select-value-color-red { background-color: rgba(255,0,26,0.2); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="50e758f9-c4b3-4a68-b387-b19df3918083" class="page sans"><header><h1 class="page-title">Case study: Improving a bulk PDF<strong> Editor</strong></h1></header><div class="page-body"><p id="02b349d7-441f-45d9-8258-3a1a70569e26" class="">Enrichment Editor lets marketing, communications, or fulfillment organizations handle curveballs in their mail channel workflow. This tool enables them to add and edit text, barcodes, and data as well as cleanse addresses in mail campaigns with hundreds of thousands of pieces.</p><p id="91ee399f-2d85-4a3d-a04e-d1bb2910c1b9" class="">Our product team needed a way to demonstrate the product&#x27;s function and value. I joined the team to develop a series of simple tutorials, walking through a few key use cases. During this, I encountered a number of rough usability spots in the app. I urged the team to consider addressing them, and I put together a number of recommendations you’ll see below. The process took about 4 weeks, and many of the suggested changes are underway.</p><p id="2f6844f7-e73d-450c-afac-0b541765a2a4" class="">
+</p><figure id="bf265f75-6b3f-4236-8e41-8e8519907025" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529975348225-6M5RH8CXF0PBNEKBQKGJ/ke17ZwdGBToddI8pDm48kK75BzDVgd6OKVIpEDJtXbtZw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PI_hTBS_t1cbP5IduTofcDbDkiG8QOj__QGnGM_2vWbpQ/before-after.gif?format=2500w"><img style="width:864px" src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529975348225-6M5RH8CXF0PBNEKBQKGJ/ke17ZwdGBToddI8pDm48kK75BzDVgd6OKVIpEDJtXbtZw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PI_hTBS_t1cbP5IduTofcDbDkiG8QOj__QGnGM_2vWbpQ/before-after.gif?format=2500w"/></a><figcaption><em><strong>Main Editor view before and after: </strong></em><em>Proposed design introduces a 3rd column, simpler toolset, and new regions arranged by capability.</em></figcaption></figure><p id="96ba91d5-55f5-44b1-8fef-b60a20d0a002" class="">
+</p><h2 id="9478a8c9-395f-4d2f-b2fd-f3321792518b" class="">Tedious task flows reveal mixed conceptual models</h2><p id="3d249f86-4000-4f0c-a1c0-66dda66214f4" class="">Many of Enrichment Editor&#x27;s usability issues stemmed from an overly faithful interpretation of the software/technical model of its predecessor, a command-line-only PDF transformation engine.</p><figure id="919a5735-f6f9-4fbe-abdc-c20583a525d6" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530114645449-PM5KPZMX0QX0GKUY5MQK/ke17ZwdGBToddI8pDm48kPbZ0Rwah5c-_iFjVQAI2IwUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dteysT8q6C63ptnRzrLbXNAIH4X1HmYrp0tDnyfC16QcCjLISwBs8eEdxAxTptZAUg/Move+text+workflow.png?format=2500w"><img style="width:672px" src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530114645449-PM5KPZMX0QX0GKUY5MQK/ke17ZwdGBToddI8pDm48kPbZ0Rwah5c-_iFjVQAI2IwUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dteysT8q6C63ptnRzrLbXNAIH4X1HmYrp0tDnyfC16QcCjLISwBs8eEdxAxTptZAUg/Move+text+workflow.png?format=2500w"/></a></figure><p id="71db4c08-9799-4f70-8eeb-48d9cf0834be" class="">The tool was built for a target persona of Mail Fulfillment Coordinator. From the perspective of this user, functions with overly technical names like &quot;Define Field&quot; and &quot;Add Operation&quot; would not be intuitive. To make the app more familiar, we needed to extend and clarify the canvas/document model, as it is used in common word processor and page layout apps.</p><p id="8d3c967e-664a-4c87-8cf9-276427615c0c" class="">I was calling it a renovation because we had a small engineering team that was building on top of a finicky PDF engine. &quot;Redesign&quot; evoked an impossible overhaul. It was important to identify the highest value changes and move as little else as possible.</p><p id="fba06a84-e0d5-41d6-932e-d73e932c2db4" class="">
+</p><figure id="cd5bc326-af00-410a-8d02-4541f4914cd6" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529457088671-MPKH6YHP7E2JO8HQD8VA/ke17ZwdGBToddI8pDm48kIjNa9er86dW7K45zwlv5w9Zw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PI5hcJ0QMC0U9DDNgJjcsN4rWorzabXwb3-B3HuW1IxFo/toolbar-old-annotated.png?format=1000w"><img style="width:672px" src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529457088671-MPKH6YHP7E2JO8HQD8VA/ke17ZwdGBToddI8pDm48kIjNa9er86dW7K45zwlv5w9Zw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PI5hcJ0QMC0U9DDNgJjcsN4rWorzabXwb3-B3HuW1IxFo/toolbar-old-annotated.png?format=1000w"/></a><figcaption><em><strong>Original catch-all Toolbar:</strong></em><em> Most tools did not act on canvas directly</em></figcaption></figure><h2 id="98414bf6-25b7-4e0d-be58-e6c1a997f6f6" class="">Map regions and identify key concepts</h2><p id="1ae2bb1b-58ef-4c7b-afc2-acd368ff48d1" class="">Recording the tutorials turned out to be a great technique for gaining an in-depth understanding of the app. Through the process, key concepts of the app emerged that would guides how to group functions when it was time to move things around.</p><figure id="9560f1fc-5d26-45c8-b259-ff4de84b30fa" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530071992678-L09XGKLBJIDBW2JFO5BD/ke17ZwdGBToddI8pDm48kIYmcrcDIlXRVMPN-7sfBAl7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UUkZXsYndN9w6uSyoslqjqi-eEUuPFmisalz6S2UaUSoP7cJNZlDXbgJNE9ef52e8w/Screen+Shot+2018-06-26+at+9.24.36+PM.png?format=1000w"><img src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530071992678-L09XGKLBJIDBW2JFO5BD/ke17ZwdGBToddI8pDm48kIYmcrcDIlXRVMPN-7sfBAl7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UUkZXsYndN9w6uSyoslqjqi-eEUuPFmisalz6S2UaUSoP7cJNZlDXbgJNE9ef52e8w/Screen+Shot+2018-06-26+at+9.24.36+PM.png?format=1000w"/></a><figcaption><em><strong>Key App Concepts </strong></em><em>Users take actions on different levels of the app. A hierarchy guides the grouping and placement of controls.</em></figcaption></figure><p id="487c0ad8-b41f-466d-a39c-e6a93a1eb830" class="">
+</p><figure id="7a7d98d5-b7ae-47d4-bda0-f501601811a5" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530041588713-L7JJUUCQR4FLUB9W0JPB/ke17ZwdGBToddI8pDm48kHNbxC6MUo9UBUr91bfuuxx7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UWzeUjL-09zzcMX3hH6-_NS1ZZUTjTbPkSsB_uXDBIHGoRwB-dUGsSquCnVTFQcaRg/old-regions.png?format=1500w"><img src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530041588713-L7JJUUCQR4FLUB9W0JPB/ke17ZwdGBToddI8pDm48kHNbxC6MUo9UBUr91bfuuxx7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UWzeUjL-09zzcMX3hH6-_NS1ZZUTjTbPkSsB_uXDBIHGoRwB-dUGsSquCnVTFQcaRg/old-regions.png?format=1500w"/></a><figcaption><strong>Editor Regions</strong> (original)</figcaption></figure><h2 id="9e0ddff1-45fa-41b3-9db9-1d356e31a8db" class="">Taking a functional inventory </h2><p id="8d5678fe-a072-4e0b-8ff2-1423a53e077a" class="">Redesigning an app is difficult because it can be hard to see past what is there. Taking a &quot;functional inventory&quot; abstracts the GUI into the <em>things it can do</em>. This is a fast and loose exercise where we list <em>in the terminology of the users domain</em>, all the things the app can do.</p><p id="707cee44-0787-4145-bbd4-c771c0f64e41" class="">I learned this technique, (and much else) from Ryan Signer of Basecamp.<a href="https://vimeo.com/133046716"> Go watch his talk on it right now.</a></p><p id="5b087e16-8215-459b-8968-231b02c04a05" class="">These functions are more granular than a use case. They are are the steps within a use case. By detaching functions from affordances, we can reconsider their implementation.</p><p id="c9574e72-3521-424f-83a6-5b1cfdf7a48e" class="">Once done, I have a comprehensive list of functions that I then group into larger capabilities. These are akin to use cases. To do this, you’re looking for the &quot;joints&quot; in the app: groups of things that work together without affecting the other groups. Orthogonality is the fancy word for it. I then focus on our core user and ask: which capability did this user buy? The answer shows us where to start.</p><figure id="16401ffd-e4f6-4a16-86dd-adc8e5b602c7" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530116250313-WZYXL972EVEIGM2NPJOO/ke17ZwdGBToddI8pDm48kNx4YWrYkBaKZBO2U4UATc57gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UbHgMEdDloRBfyp-zp3ynQo7ypaAj78UczQV5H_1JdiI3WUfc_ZsVm9Mi1E6FasEnQ/Screen+Shot+2018-06-19+at+7.46.46+PM.png?format=1500w"><img style="width:864px" src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530116250313-WZYXL972EVEIGM2NPJOO/ke17ZwdGBToddI8pDm48kNx4YWrYkBaKZBO2U4UATc57gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UbHgMEdDloRBfyp-zp3ynQo7ypaAj78UczQV5H_1JdiI3WUfc_ZsVm9Mi1E6FasEnQ/Screen+Shot+2018-06-19+at+7.46.46+PM.png?format=1500w"/></a><figcaption><strong>Functional Inventory </strong>everything the editor can do in plain english</figcaption></figure><p id="b0194cab-4037-4aeb-a3e1-21663d4090c5" class="">
+</p><figure id="de2da12e-6f95-4587-a8a6-8c61644239ad" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530116337925-OAKV47QCOVPCIFMEYOQY/ke17ZwdGBToddI8pDm48kLJ1zcIzqqcZVvSSskWrfvV7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UUCzi2ttreswNfjLNgevEZXyIvzdmLWk76Z6p489sigam7cT0R_dexc_UL_zbpz6JQ/Screen+Shot+2018-06-19+at+7.48.07+PM.png?format=1500w"><img style="width:864px" src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530116337925-OAKV47QCOVPCIFMEYOQY/ke17ZwdGBToddI8pDm48kLJ1zcIzqqcZVvSSskWrfvV7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UUCzi2ttreswNfjLNgevEZXyIvzdmLWk76Z6p489sigam7cT0R_dexc_UL_zbpz6JQ/Screen+Shot+2018-06-19+at+7.48.07+PM.png?format=1500w"/></a><figcaption><em><strong>Grouped by capability </strong></em><em>to prioritize most important use cases</em></figcaption></figure><p id="f0ca5b23-23a1-4a20-ab99-1542cf9ebeb2" class="">
+</p><h2 id="403c7ee4-6b71-4f35-98be-2675e98ee567" class="">Task flows → Use Cases → Job-to-be-done</h2><figure id="fdbe0ed6-932c-42d0-837b-a0ccaf9e9e60" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529976763456-18A4ZKUV51HT6SMJQQKZ/ke17ZwdGBToddI8pDm48kMTTs6Qb4MhB8v6uvHFLMIpZw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PIi5auTv8CDnHUUSuae4yCjrQ-zNCIjr3A9h1PetVVHF8/3-levels.gif?format=2500w"><img style="width:720px" src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529976763456-18A4ZKUV51HT6SMJQQKZ/ke17ZwdGBToddI8pDm48kMTTs6Qb4MhB8v6uvHFLMIpZw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PIi5auTv8CDnHUUSuae4yCjrQ-zNCIjr3A9h1PetVVHF8/3-levels.gif?format=2500w"/></a></figure><h2 id="21e54850-e6d6-4faa-af66-ece95312dcdb" class="">Redesigning around key task flows</h2><p id="a45157ae-9721-445e-a08a-02688a7e63d7" class="">I started with the <em>add element</em> &amp; <em>edit element</em> capabilities by verbally sketching the tutorial use cases. Describing the process with only words helps me evaluate flows without getting caught up in the interface elements. Getting clear flows revealed problem areas in the app. There were a number of usability snags that were easy wins.</p><p id="026e9c76-fa79-4944-a6ee-3ed7a7dbd41c" class="">
+</p><figure id="6eb8bd69-9369-4456-9588-af99e02b7e76" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529459524643-5VDC2RL92DGN05S9W7B7/ke17ZwdGBToddI8pDm48kJQKckXYXDx_7-ob8YDv6s0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYwL8IeDg6_3B-BRuF4nNrNcQkVuAT7tdErd0wQFEGFSnAgp00V9-Pi3lkxYzXfm58ZXqd_6S3epO3yjmKB3yYJJDeUXhYwTFRivK3DEtm3L8g/Screen+Shot+2018-06-19+at+7.51.18+PM.png?format=2500w"><img style="width:1008px" src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529459524643-5VDC2RL92DGN05S9W7B7/ke17ZwdGBToddI8pDm48kJQKckXYXDx_7-ob8YDv6s0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYwL8IeDg6_3B-BRuF4nNrNcQkVuAT7tdErd0wQFEGFSnAgp00V9-Pi3lkxYzXfm58ZXqd_6S3epO3yjmKB3yYJJDeUXhYwTFRivK3DEtm3L8g/Screen+Shot+2018-06-19+at+7.51.18+PM.png?format=2500w"/></a></figure><p id="69e0ad59-522f-4d04-83cb-0868a504f1eb" class="">
+</p><hr id="cad84868-e71f-4030-8ca4-62f6e6742a61"/><h1 id="d7f6e2cc-0a23-42b2-9691-384c88bd7e65" class="">Recomendations</h1><h2 id="01dd7571-0d80-4d12-a887-53a9875bc262" class="">1. Clarify view mode controls</h2><figure id="6208167f-d706-406d-a137-76202b8d5e1e" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530039398165-P1TT8DEEX9T1NGYFFC8R/ke17ZwdGBToddI8pDm48kJlaDTlrLoXol7yA5fek1oQUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2do6Rye6yhReiiZ9dKI7SB2-jhZIIfNurygIsn3TEayy3CjLISwBs8eEdxAxTptZAUg/Screen+Shot+2018-06-25+at+7.40.30+PM.png?format=2500w"><img src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530039398165-P1TT8DEEX9T1NGYFFC8R/ke17ZwdGBToddI8pDm48kJlaDTlrLoXol7yA5fek1oQUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2do6Rye6yhReiiZ9dKI7SB2-jhZIIfNurygIsn3TEayy3CjLISwBs8eEdxAxTptZAUg/Screen+Shot+2018-06-25+at+7.40.30+PM.png?format=2500w"/></a></figure><p id="6a9d6010-9035-4f2c-aafc-51998b9a3d48" class="">Reserve icons for actions/toolbar, lessen ambiguity with labels, and display sub-view controls (show/hide selections &amp; check syntax) only when in that view mode, (Original and Code respectively)</p><h2 id="400c0b9d-dfa4-4d15-8d02-d8e1b2d46a50" class="">2. Unpack Toolbar</h2><p id="7336c142-b5b2-40b0-9023-6d5d148b3b47" class="">The toolbar was a catchall for an assortment of functions, most had nothing to do with the canvas. I removed tools that did not act directly on the canvas, categorizing them into the key capabilities defined previously.</p><figure id="e77cd673-e559-46ea-a2a3-a7974c6bc9bc" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529977294779-A4IX49N18VEP9IQJOTH1/ke17ZwdGBToddI8pDm48kJ8SL6-M9l1x55-Q6oxJcikUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2djRCn2IwmY1JaHZTGumYYWOlpLCryY06HDLM7Yo_ch7nCjLISwBs8eEdxAxTptZAUg/Screen+Shot+2018-06-25+at+7.39.54+PM.png?format=2500w"><img src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529977294779-A4IX49N18VEP9IQJOTH1/ke17ZwdGBToddI8pDm48kJ8SL6-M9l1x55-Q6oxJcikUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2djRCn2IwmY1JaHZTGumYYWOlpLCryY06HDLM7Yo_ch7nCjLISwBs8eEdxAxTptZAUg/Screen+Shot+2018-06-25+at+7.39.54+PM.png?format=2500w"/></a></figure><h2 id="6768e43e-c332-413b-901f-fbbebff38b86" class="">3. Move documents, resources and CASS settings to left column</h2><figure id="903a24a7-82c5-4811-a9b2-e09c5c616ee2" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530124070292-OOKE2OLVCGLWSSCXIL3G/ke17ZwdGBToddI8pDm48kIHM8fX0TTnt9N6Xt6wM87wUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dqSQLJxAcMJUtVY5aXRSIuEsGIRlbvbPgFzgWVCQITfdCjLISwBs8eEdxAxTptZAUg/project-area.png?format=2500w"><img src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530124070292-OOKE2OLVCGLWSSCXIL3G/ke17ZwdGBToddI8pDm48kIHM8fX0TTnt9N6Xt6wM87wUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dqSQLJxAcMJUtVY5aXRSIuEsGIRlbvbPgFzgWVCQITfdCjLISwBs8eEdxAxTptZAUg/project-area.png?format=2500w"/></a></figure><h2 id="d6f66db5-8549-44d4-81e4-154973585730" class="">4. Consolidate &amp; refine canvas tools</h2><figure id="73a45c86-7c55-47fb-afba-5f66196024af" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529977146687-ZQJI58PDZPZF9CVCCVMO/ke17ZwdGBToddI8pDm48kFtLy3j_pSegzQOheSPLcUcUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dv1wiMchmI2MsewecukD9oyjNnWVXDlIK-YprHwAD8V1CjLISwBs8eEdxAxTptZAUg/Screen+Shot+2018-06-25+at+7.38.30+PM.png?format=2500w"><img src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1529977146687-ZQJI58PDZPZF9CVCCVMO/ke17ZwdGBToddI8pDm48kFtLy3j_pSegzQOheSPLcUcUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dv1wiMchmI2MsewecukD9oyjNnWVXDlIK-YprHwAD8V1CjLISwBs8eEdxAxTptZAUg/Screen+Shot+2018-06-25+at+7.38.30+PM.png?format=2500w"/></a></figure><h2 id="6052c5d3-4465-46b2-a9eb-97b43df431ae" class="">Working up to Layout changes</h2><figure id="717cd94c-c1d9-4658-b3d3-6ceb4d9433bd" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530121142524-OMBTXNPZ615U9MQ0YVO9/ke17ZwdGBToddI8pDm48kJWIq-FCoE6O4R84M4NFFyB7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UQFMVnAmAt6msv0O18Ju4U5Uk8Jf0V3wG50kCSB6UrS9W07ycm2Trb21kYhaLJjddA/regions-sketch.png?format=1000w"><img src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530121142524-OMBTXNPZ615U9MQ0YVO9/ke17ZwdGBToddI8pDm48kJWIq-FCoE6O4R84M4NFFyB7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UQFMVnAmAt6msv0O18Ju4U5Uk8Jf0V3wG50kCSB6UrS9W07ycm2Trb21kYhaLJjddA/regions-sketch.png?format=1000w"/></a></figure><p id="e7d6445d-afc0-4995-bf80-8eafdfe55e3e" class="">
+</p><p id="51b94c61-05e2-4fbb-b52c-3ce72b40520c" class="">After picking off these four contained problems to start and building up to better inform the whole network of the interaction model, rather than the overwhelming top-down approach.</p><p id="00c1b6b2-991b-4bfa-b8ee-7aefa72b08aa" class="">I needed to find places for these displaced toolbar functions. This is when having a well-defined conceptual hierarchy and list of major capabilities helps when finding a home on the screen. I played with new regions, introducing a 3rd column to accommodate.</p><p id="a3c9c7b5-3e0c-4c9a-b51f-e403b3426bc1" class="">
+</p><figure id="fbbd35a1-fc7e-4eaf-a9e9-2ee9e4b39865" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530041676763-AI51YCPUCAMMICM82C4G/ke17ZwdGBToddI8pDm48kBy5YVT4azpeIBLMp4WDJXp7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1URjcjnT1pjV2Az_J_hwy8EeAob2uwfZuabCa9TqwrQYjpC969RuPXvt2ZwyzUXQf7Q/new-regions.png?format=2500w"><img src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530041676763-AI51YCPUCAMMICM82C4G/ke17ZwdGBToddI8pDm48kBy5YVT4azpeIBLMp4WDJXp7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1URjcjnT1pjV2Az_J_hwy8EeAob2uwfZuabCa9TqwrQYjpC969RuPXvt2ZwyzUXQf7Q/new-regions.png?format=2500w"/></a></figure><p id="59938a40-c247-446c-84e9-f500c74096d6" class="">The 3-column layout made space for an Edits section where users can easily see and work on the modifications they are making to the PDF. Most key regions of the app were retained with Edits and Output sections added.</p><p id="219fb365-8aa2-44f2-9fde-5db52fa5828e" class="">
+</p><figure id="f1260b69-4e62-408f-bfd9-b8cc16e269c4" class="image"><a href="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530117590271-QGPJ8PTFZIQVNOE5IQKO/ke17ZwdGBToddI8pDm48kNi1SPVyRfR0wq8SKfQGpNlZw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PISpj5X8xv2Y7pgnJ7C9FExHVVY55uBOqoRE3cJxq0RK4/new-add-text.gif?format=2500w"><img style="width:720px" src="https://images.squarespace-cdn.com/content/v1/5417369ae4b0acba18c5d939/1530117590271-QGPJ8PTFZIQVNOE5IQKO/ke17ZwdGBToddI8pDm48kNi1SPVyRfR0wq8SKfQGpNlZw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PISpj5X8xv2Y7pgnJ7C9FExHVVY55uBOqoRE3cJxq0RK4/new-add-text.gif?format=2500w"/></a><figcaption><em><strong>Add Text flow</strong></em><em> in the redesigned editor</em></figcaption></figure><p id="36bf9ac3-914e-470a-9029-d2f6fe80e647" class="">The recommendations were well-received by the Product Owner and Engineering team. This first round attempted to resolve some acute usability issues at a high level. There are still areas of the app, like tool dialogs and page management, that will need to be addressed.</p></div></article></body></html>
